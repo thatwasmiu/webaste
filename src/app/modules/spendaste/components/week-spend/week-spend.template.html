@@ -1,3 +1,24 @@
+<p-calendar
+  (onSelect)="selectDate($event)"
+  firstDayOfWeek="1"
+  view="year"
+  dateFormat="yy"
+  [(ngModel)]="date"
+>
+</p-calendar>
+<p-dropdown
+  [options]="weeks"
+  [(ngModel)]="weekOfYear"
+  [filter]="true"
+  placeholder="Tuần"
+  [showClear]="true"
+  optionLabel="label"
+  optionValue="value"
+  filterBy="label"
+>
+  <ng-template let-week pTemplate="item">Tuần {{ week.label }} </ng-template>
+</p-dropdown>
+
 <div class="grid gap-4 m-1">
   <div class="col-9">
     <p-table

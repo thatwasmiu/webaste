@@ -1,23 +1,14 @@
-<p-calendar
-  (onSelect)="selectDate($event)"
-  firstDayOfWeek="1"
-  view="year"
-  dateFormat="yy"
-  [(ngModel)]="date"
->
-</p-calendar>
+<!-- <p-calendar (onSelect)="selectYear($event)" firstDayOfWeek="1" view="year" dateFormat="Year yy" [(ngModel)]="date"> </p-calendar> -->
+<p-calendar (onSelect)="selectYearMonth($event)" [(ngModel)]="date" view="month" dateFormat="'Month' mm" [readonlyInput]="true"></p-calendar>
 <p-dropdown
-  [options]="weeks"
-  [(ngModel)]="weekOfYear"
-  [filter]="true"
-  placeholder="Tuần"
-  [showClear]="true"
-  optionLabel="label"
-  optionValue="value"
-  filterBy="label"
+  [options]="monthBalance.weekOfMonth"
+  [(ngModel)]="week"
+  (onChange)="selectWeek($event)"
 >
-  <ng-template let-week pTemplate="item">Tuần {{ week.label }} </ng-template>
+  <ng-template pTemplate="selectedItem">Week {{ week }}</ng-template>
+  <ng-template let-week pTemplate="item">Week {{ week }} </ng-template>
 </p-dropdown>
+<!-- <p-inputNumber [(ngModel)]="weekOfYear" [showButtons]="true" prefix="Week " [showClear]="true" (onInput)="selectWeek($event)" [useGrouping]="false" [min]="1" [max]="53"> </p-inputNumber> -->
 
 <div class="grid gap-4 m-1">
   <div class="col-9">
@@ -35,7 +26,10 @@
       </ng-template>
       <ng-template pTemplate="body" let-daySpend>
         <tr>
-          <td>{{ daySpend.date | date:'dd/MM/yyyy' }}</td>
+          <td (click)="addTransaction()">
+            {{ daySpend.date | date:'dd/MM/yyyy' }}
+            <spand class="pi pi-plus-circle" style="font-size: 0,5rem"></spand>
+          </td>
           <td>
             <div *ngFor="let t of daySpend.transactions">
               {{ t.name }} - {{ t.amount }}
@@ -50,9 +44,10 @@
 
   <div class="col">
     <div class="shadow-2 surface-card p-3 border-round">
-      <h3 class="m-0">Summary</h3>
-      <p>Total Cash: {{ 0 }}</p>
-      <p>Total Digital: {{ 0 }}</p>
+      <h3 class="m-0">Week Spending Summary</h3>
+      <p>Total Cash: {{ weekSpend.cashSpend }}</p>
+      <p>Total Digital: {{ weekSpend.digitalSpend }}</p>
+      <p>Total Spending: {{ weekSpend.cashSpend + weekSpend.digitalSpend }}</p>
       <p>Total Transactions: {{ 0 }}</p>
     </div>
 
@@ -62,5 +57,16 @@
     </div>
   </div>
 </div>
-
+<div class="shadow-2 surface-card p-3 border-round">
+  <h3 class="m-0">Month Balance</h3>
+  <p>Cash Balance: {{ monthBalance.cashBalance }}</p>
+  <p>Digital Balance: {{ monthBalance.digitalBalance }}</p>
+  <p>Cash Spending: {{ monthBalance.monthSpend?.cashSpend }}</p>
+  <p>Digital Spending: {{ monthBalance.monthSpend?.digitalSpend }}</p>
+</div>
+<div class="shadow-2 surface-card p-3 border-round">
+  <h3 class="m-0">Month Budget</h3>
+  <p>Total: {{ monthBalance.monthBudget?.budget }}</p>
+  <p>Increase: {{ monthBalance.monthBudget?.extraIncrease }}</p>
+</div>
 <!-- Cards column (take ~30%) -->

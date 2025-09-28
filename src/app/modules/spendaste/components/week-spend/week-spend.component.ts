@@ -2,14 +2,28 @@ import { CommonModule } from '@angular/common';
 import { TableModule } from 'primeng/table';
 import { AfterViewInit, Component, OnInit } from '@angular/core';
 import { MoneyTransactionService } from 'src/app/modules/spendaste/services/money-transaction.service';
-import { MonthBalance, WeekSpend } from '../../models/spendaste.model';
+import {
+  DaySpend,
+  MoneyTransaction,
+  MonthBalance,
+  WeekSpend,
+} from '../../models/spendaste.model';
 import { CalendarModule } from 'primeng/calendar';
-import { FormsModule } from '@angular/forms';
+import {
+  FormBuilder,
+  FormGroup,
+  FormsModule,
+  ReactiveFormsModule,
+  Validators,
+} from '@angular/forms';
 import { DropdownModule } from 'primeng/dropdown';
+import { DialogModule } from 'primeng/dialog';
 import { InputNumberModule } from 'primeng/inputnumber';
 import { MonthBalanceService } from '../../services/month-blance.service';
 import { forkJoin } from 'rxjs';
 import { ButtonModule } from 'primeng/button';
+import { InputTextModule } from 'primeng/inputtext';
+import { AuthService } from 'src/app/core/auth/auth.service';
 
 @Component({
   selector: 'app-sc-logistics-list',
@@ -21,9 +35,12 @@ import { ButtonModule } from 'primeng/button';
     TableModule,
     CalendarModule,
     FormsModule,
+    ReactiveFormsModule,
     DropdownModule,
     InputNumberModule,
-    ButtonModule
+    ButtonModule,
+    DialogModule,
+    InputTextModule,
   ],
   providers: [MoneyTransactionService, MonthBalanceService],
 })
@@ -33,11 +50,28 @@ export class WeekSpendConponent implements OnInit, AfterViewInit {
   year;
   date: Date;
 
-  monthBalance: MonthBalance = {weekOfMonth: Array.from({ length: 53 }, (_, i) => i + 1)}
+  addSpendDialogVisible = false;
+  userId;
+
+  monthBalance: MonthBalance = {
+    weekOfMonth: Array.from({ length: 53 }, (_, i) => i + 1),
+  };
   weekSpend: WeekSpend = { daySpends: [], cashSpend: '0', digitalSpend: '0' };
-  public constructor(private moneyTransactionService: MoneyTransactionService, private monthBalanceService: MonthBalanceService) {
+  public constructor(
+    private moneyTransactionService: MoneyTransactionService,
+    private monthBalanceService: MonthBalanceService,
+    private fb: FormBuilder,
+    private authService: AuthService
+  ) {
+    this.userId = authService.getUserId();
     this.setDate(new Date());
     this.getMonthSpend();
+    this.transactionForm = this.fb.group({
+      name: [null, Validators.required],
+      amount: [null, [Validators.required]],
+      type: [null, [Validators.required]],
+      method: [null, [Validators.required]],
+    });
   }
 
   ngOnInit(): void {}
@@ -76,22 +110,51 @@ export class WeekSpendConponent implements OnInit, AfterViewInit {
     this.getWeekSpend();
   }
 
-  addTransaction() {
-    console.log('test')
+  editedDaySpend: DaySpend;
+  transactionForm: FormGroup;
+  addTransaction(daySpend) {
+    this.editedDaySpend = daySpend;
+    this.addSpendDialogVisible = true;
+    this.transactionForm.reset();
+  }
+
+  onSubmit(): void {
+    if (this.transactionForm.valid) {
+      let transaction: MoneyTransaction = {
+        date: this.editedDaySpend.date,
+        userId: this.userId,
+        ...this.transactionForm.getRawValue(),
+      };
+
+      this.moneyTransactionService.create(transaction).subscribe({
+        next: (res) => {
+          console.log(res);
+          this.addSpendDialogVisible = false;
+          this.getMonthSpend();
+        },
+        error: (err) => {
+          console.log(err);
+        },
+      });
+    }
   }
 
   getMonthSpend() {
     forkJoin({
-      monthBalance: this.monthBalanceService.getMonthBalance(this.year * 100 + this.month),
-      weekSpend: this.moneyTransactionService.getWeekSpend(this.year * 100 + this.week)
+      monthBalance: this.monthBalanceService.getMonthBalance(
+        this.year * 100 + this.month
+      ),
+      weekSpend: this.moneyTransactionService.getWeekSpend(
+        this.year * 100 + this.week
+      ),
     }).subscribe({
       next: ({ monthBalance, weekSpend }) => {
         this.monthBalance = monthBalance;
         this.weekSpend = weekSpend;
       },
-      error: err => {
+      error: (err) => {
         console.error('Error:', err);
-      }
+      },
     });
   }
 
@@ -104,5 +167,4 @@ export class WeekSpendConponent implements OnInit, AfterViewInit {
       },
     });
   }
-
 }

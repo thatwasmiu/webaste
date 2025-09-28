@@ -1,5 +1,11 @@
 <!-- <p-calendar (onSelect)="selectYear($event)" firstDayOfWeek="1" view="year" dateFormat="Year yy" [(ngModel)]="date"> </p-calendar> -->
-<p-calendar (onSelect)="selectYearMonth($event)" [(ngModel)]="date" view="month" dateFormat="'Month' mm" [readonlyInput]="true"></p-calendar>
+<p-calendar
+  (onSelect)="selectYearMonth($event)"
+  [(ngModel)]="date"
+  view="month"
+  dateFormat="'Month' mm"
+  [readonlyInput]="true"
+></p-calendar>
 <p-dropdown
   [options]="monthBalance.weekOfMonth"
   [(ngModel)]="week"
@@ -26,9 +32,9 @@
       </ng-template>
       <ng-template pTemplate="body" let-daySpend>
         <tr>
-          <td (click)="addTransaction()">
+          <td (click)="addTransaction(daySpend)">
             {{ daySpend.date | date:'dd/MM/yyyy' }}
-            <spand class="pi pi-plus-circle" style="font-size: 0,5rem"></spand>
+            <spand class="pi pi-plus-circle" style="font-size: 0, 5rem"></spand>
           </td>
           <td>
             <div *ngFor="let t of daySpend.transactions">
@@ -70,3 +76,97 @@
   <p>Increase: {{ monthBalance.monthBudget?.extraIncrease }}</p>
 </div>
 <!-- Cards column (take ~30%) -->
+
+<p-dialog
+  [(visible)]="addSpendDialogVisible"
+  [style]="{width: '50vw'} "
+  [modal]="true"
+  [dismissableMask]="true"
+>
+  <ng-template pTemplate="header">
+    Transaction in day {{ editedDaySpend.date | date: 'dd/MM/yyyy' }}
+  </ng-template>
+
+  <form [formGroup]="transactionForm" (ngSubmit)="onSubmit()" class="p-fluid">
+    <!-- Name -->
+    <div class="field">
+      <label for="name">Name</label>
+      <input id="name" type="text" pInputText formControlName="name" />
+      <small
+        *ngIf="transactionForm.controls['name'].invalid && transactionForm.controls['name'].touched"
+        class="p-error"
+      >
+        Name is required
+      </small>
+    </div>
+
+    <!-- Amount -->
+    <div class="field">
+      <label for="amount">Amount</label>
+      <p-inputNumber
+        inputId="amount"
+        formControlName="amount"
+        mode="decimal"
+        placeholder="0.00"
+      >
+      </p-inputNumber>
+      <small
+        *ngIf="transactionForm.controls['amount'].invalid && transactionForm.controls['amount'].touched"
+        class="p-error"
+      >
+        Amount is required
+      </small>
+    </div>
+
+    <!-- Type -->
+    <div class="field">
+      <label for="type">Type</label>
+      <p-dropdown
+        id="type"
+        [options]="[
+          'OUTGOING_INCLUDED',
+        'OUTGOING_EXCLUDED',
+        'OUTGOING_PENDING',
+        'INCOMING_INCLUDED',
+        'INCOMING_EXCLUDED',
+        'INCOMING_PENDING'
+        ]"
+        formControlName="type"
+        placeholder="Select Type"
+      >
+      </p-dropdown>
+      <small
+        *ngIf="transactionForm.controls['type'].invalid && transactionForm.controls['type'].touched"
+        class="p-error"
+      >
+        Type is required
+      </small>
+    </div>
+
+    <!-- Method -->
+    <div class="field">
+      <label for="method">Method</label>
+      <p-dropdown
+        id="method"
+        [options]="['CASH', 'DIGITAL']"
+        formControlName="method"
+        placeholder="Select Method"
+      >
+      </p-dropdown>
+      <small
+        *ngIf="transactionForm.controls['method'].invalid && transactionForm.controls['method'].touched"
+        class="p-error"
+      >
+        Method is required
+      </small>
+    </div>
+
+    <!-- Submit -->
+    <button
+      pButton
+      type="submit"
+      label="Save"
+      [disabled]="transactionForm.invalid"
+    ></button>
+  </form>
+</p-dialog>

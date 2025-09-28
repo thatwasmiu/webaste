@@ -49,6 +49,14 @@
               ],
               "outputHashing": "all"
             },
+            "railway": {
+              "fileReplacements": [
+                {
+                  "replace": "src/environments/environment.ts",
+                  "with": "src/environments/environment.railway.ts"
+                }
+              ]
+            },
             "development": {
               "buildOptimizer": false,
               "optimization": false,
@@ -64,10 +72,15 @@
           "builder": "@angular-devkit/build-angular:dev-server",
           "configurations": {
             "production": {
-              "browserTarget": "webaste:build:production"
+              "browserTarget": "webaste:build:production",
+              "port": 4230
             },
             "development": {
               "browserTarget": "webaste:build:development",
+              "port": 4230
+            },
+            "railway": {
+              "browserTarget": "webaste:build:railway",
               "port": 4230
             }
           },

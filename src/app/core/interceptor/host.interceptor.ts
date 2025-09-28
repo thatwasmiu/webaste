@@ -23,9 +23,6 @@ export class HostInterceptor implements HttpInterceptor {
       req.url.includes('https')
     )
       return next.handle(req);
-
-    console.log('test');
-
     req = req.clone({
       url: environment.HOST_GW + req.url,
     });

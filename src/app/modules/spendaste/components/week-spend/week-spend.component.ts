@@ -20,7 +20,7 @@ import { DropdownModule } from 'primeng/dropdown';
 import { DialogModule } from 'primeng/dialog';
 import { InputNumberModule } from 'primeng/inputnumber';
 import { MonthBalanceService } from '../../services/month-blance.service';
-import { forkJoin } from 'rxjs';
+import { forkJoin, map, switchMap } from 'rxjs';
 import { ButtonModule } from 'primeng/button';
 import { InputTextModule } from 'primeng/inputtext';
 import { AuthService } from 'src/app/core/auth/auth.service';
@@ -45,13 +45,12 @@ import { AuthService } from 'src/app/core/auth/auth.service';
   providers: [MoneyTransactionService, MonthBalanceService],
 })
 export class WeekSpendConponent implements OnInit, AfterViewInit {
-  week;
-  month;
-  year;
+  week: number;
+  month: number;
+  year: number;
   date: Date;
-
-  addSpendDialogVisible = false;
-  userId;
+  userId: number;
+  totalTransactions: number = 0;
 
   monthBalance: MonthBalance = {
     weekOfMonth: Array.from({ length: 53 }, (_, i) => i + 1),
@@ -67,6 +66,7 @@ export class WeekSpendConponent implements OnInit, AfterViewInit {
     this.setDate(new Date());
     this.getMonthSpend();
     this.transactionForm = this.fb.group({
+      date: [null, Validators.required],
       name: [null, Validators.required],
       amount: [null, [Validators.required]],
       type: [null, [Validators.required]],
@@ -110,52 +110,68 @@ export class WeekSpendConponent implements OnInit, AfterViewInit {
     this.getWeekSpend();
   }
 
-  editedDaySpend: DaySpend;
+  editedTransaction: MoneyTransaction;
   transactionForm: FormGroup;
-  addTransaction(daySpend) {
-    this.editedDaySpend = daySpend;
-    this.addSpendDialogVisible = true;
+  transactionDialogVisible = false;
+  addTransaction(daySpend: DaySpend) {
+    this.editedTransaction = {userId: this.userId, date : daySpend.date};
+    this.transactionDialogVisible = true;
     this.transactionForm.reset();
+    this.transactionForm.patchValue({date: new Date(daySpend.date) ,type: 'OUTGOING_INCLUDED', method: 'DIGITAL'})
+  }
+
+  editTransaction(transaction: MoneyTransaction) {
+    this.editedTransaction = transaction;
+    this.transactionDialogVisible = true;
+    this.transactionForm.reset();
+    this.transactionForm.patchValue({...transaction, date: new Date(transaction.date)})
   }
 
   onSubmit(): void {
     if (this.transactionForm.valid) {
+      let formValue = this.transactionForm.getRawValue();
       let transaction: MoneyTransaction = {
-        date: this.editedDaySpend.date,
-        userId: this.userId,
-        ...this.transactionForm.getRawValue(),
+        ...this.editedTransaction,
+        ...formValue,
+        date: formValue.date.getTime()
       };
 
-      this.moneyTransactionService.create(transaction).subscribe({
-        next: (res) => {
-          console.log(res);
-          this.addSpendDialogVisible = false;
+      let request$ = transaction.id
+      ? this.moneyTransactionService.update(transaction)
+      : this.moneyTransactionService.create(transaction);
+
+      request$.subscribe({
+        next: () => {
+          this.transactionDialogVisible = false;
           this.getMonthSpend();
         },
         error: (err) => {
-          console.log(err);
-        },
+          console.error(err);
+        }
       });
     }
   }
 
   getMonthSpend() {
-    forkJoin({
-      monthBalance: this.monthBalanceService.getMonthBalance(
-        this.year * 100 + this.month
-      ),
-      weekSpend: this.moneyTransactionService.getWeekSpend(
-        this.year * 100 + this.week
-      ),
-    }).subscribe({
-      next: ({ monthBalance, weekSpend }) => {
+    this.moneyTransactionService.getWeekSpend(this.year * 100 + this.week).pipe(
+    switchMap((weekSpend) =>
+        this.monthBalanceService.getMonthBalance(this.year * 100 + this.month).pipe(
+          map((monthBalance) => ({ weekSpend, monthBalance }))
+        )
+      )
+    ).subscribe({
+      next: ({ weekSpend, monthBalance }) => {
         this.monthBalance = monthBalance;
         this.weekSpend = weekSpend;
+        this.totalTransactions = weekSpend.daySpends
+          .map(e => e.transactions.length)
+          .reduce((sum, len) => sum + len, 0);
       },
       error: (err) => {
         console.error('Error:', err);
       },
     });
+
   }
 
   getWeekSpend() {

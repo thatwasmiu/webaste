@@ -37,8 +37,14 @@
             <spand class="pi pi-plus-circle" style="font-size: 0, 5rem"></spand>
           </td>
           <td>
-            <div *ngFor="let t of daySpend.transactions">
-              {{ t.name }} - {{ t.amount }}
+            <div *ngFor="let t of daySpend.transactions" (click)="editTransaction(t)">
+              {{t.date | date : 'HH:ss'}} {{ t.name }} - {{ t.amount }}
+              <span *ngIf="t.method === 'CASH'">
+                <i class="pi pi-wallet" style="color: green;"></i>
+              </span>
+              <span *ngIf="t.method === 'DIGITAL'">
+                <i class="pi pi-credit-card" style="color: blue;"></i>
+              </span>
             </div>
           </td>
           <td>{{ daySpend.cashSpend }}</td>
@@ -54,12 +60,20 @@
       <p>Total Cash: {{ weekSpend.cashSpend }}</p>
       <p>Total Digital: {{ weekSpend.digitalSpend }}</p>
       <p>Total Spending: {{ weekSpend.cashSpend + weekSpend.digitalSpend }}</p>
-      <p>Total Transactions: {{ 0 }}</p>
+      <p>Total Transactions: {{ totalTransactions }}</p>
     </div>
 
     <div class="shadow-2 surface-card p-3 border-round">
-      <h3 class="m-0">Other Info</h3>
-      <p>Some additional stats or charts here</p>
+      <h3 class="m-0">Month Spending Summary</h3>
+      <p>Cash Spending: {{ monthBalance.monthSpend?.cashSpend }}</p>
+      <p>Digital Spending: {{ monthBalance.monthSpend?.digitalSpend }}</p>
+      <p>
+        Total Spending:
+        {{
+          (monthBalance.monthSpend?.digitalSpend ?? 0) +
+          (monthBalance.monthSpend?.cashSpend ?? 0)
+        }}
+      </p>
     </div>
   </div>
 </div>
@@ -67,27 +81,37 @@
   <h3 class="m-0">Month Balance</h3>
   <p>Cash Balance: {{ monthBalance.cashBalance }}</p>
   <p>Digital Balance: {{ monthBalance.digitalBalance }}</p>
-  <p>Cash Spending: {{ monthBalance.monthSpend?.cashSpend }}</p>
-  <p>Digital Spending: {{ monthBalance.monthSpend?.digitalSpend }}</p>
 </div>
 <div class="shadow-2 surface-card p-3 border-round">
   <h3 class="m-0">Month Budget</h3>
   <p>Total: {{ monthBalance.monthBudget?.budget }}</p>
   <p>Increase: {{ monthBalance.monthBudget?.extraIncrease }}</p>
 </div>
-<!-- Cards column (take ~30%) -->
 
 <p-dialog
-  [(visible)]="addSpendDialogVisible"
+  [(visible)]="transactionDialogVisible"
   [style]="{width: '50vw'} "
   [modal]="true"
   [dismissableMask]="true"
 >
   <ng-template pTemplate="header">
-    Transaction in day {{ editedDaySpend.date | date: 'dd/MM/yyyy' }}
+    Transaction in {{ editedTransaction.date | date: 'dd/MM/yyyy' }}
   </ng-template>
 
   <form [formGroup]="transactionForm" (ngSubmit)="onSubmit()" class="p-fluid">
+
+    <div class="field">
+      <label for="date">Date</label>
+      <p-calendar id="date" formControlName="date" [showTime]="true" [timeOnly]="true" [showSeconds]="true" appendTo="body"></p-calendar>
+      <small
+        *ngIf="transactionForm.controls['name'].invalid && transactionForm.controls['name'].touched"
+        class="p-error"
+      >
+        Date is required
+      </small>
+    </div>
+    
+
     <!-- Name -->
     <div class="field">
       <label for="name">Name</label>
@@ -133,6 +157,7 @@
         ]"
         formControlName="type"
         placeholder="Select Type"
+        appendTo="body"
       >
       </p-dropdown>
       <small
@@ -151,6 +176,7 @@
         [options]="['CASH', 'DIGITAL']"
         formControlName="method"
         placeholder="Select Method"
+        appendTo="body"
       >
       </p-dropdown>
       <small

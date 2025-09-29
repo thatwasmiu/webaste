@@ -16,4 +16,11 @@ export class MoneyTransactionService {
       transaction
     );
   }
+
+  update(transaction: MoneyTransaction) {
+    return this.http.put<WeekSpend>(
+      '/sp/api/money-transaction/update',
+      transaction
+    );
+  }
 }

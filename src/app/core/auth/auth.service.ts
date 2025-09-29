@@ -25,8 +25,8 @@ export class AuthService {
     return tenant ? String(tenant) : null;
   }
 
-  public getUserId(): string | null {
+  public getUserId(): number | null {
     const userId = localStorage.getItem('userId');
-    return userId ? String(userId) : null;
+    return userId ? Number(userId) : null;
   }
 }

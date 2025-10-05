@@ -54,6 +54,8 @@ export interface MonthBalance extends BaseEntity {
   monthBudget?: MonthBudget;
   monthSpend?: MonthSpend;
   weekOfMonth?: number[];
+  currentCash?: number;
+  currentDigital?: number;
 }
 export interface MonthBudget {
   budget?: string; // BigDecimal → string, nullable

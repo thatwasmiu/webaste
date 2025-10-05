@@ -7,6 +7,10 @@ export class MonthBalanceService {
   constructor(private http: HttpClient) {}
 
   getMonthBalance(yearMonth: number) {
-    return this.http.get<MonthBalance>('/sp/api/month-balance/' + yearMonth);
+    return this.http.get<MonthBalance>('month-balance/' + yearMonth);
+  }
+
+  update(monthBalance: MonthBalance) {
+    return this.http.post<MonthBalance>('month-balance/update', monthBalance);
   }
 }

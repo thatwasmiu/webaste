@@ -7,20 +7,14 @@ export class MoneyTransactionService {
   constructor(private http: HttpClient) {}
 
   getWeekSpend(yearWeek: number) {
-    return this.http.get<WeekSpend>('/sp/api/money-transaction/' + yearWeek);
+    return this.http.get<WeekSpend>('money-transaction/' + yearWeek);
   }
 
   create(transaction: MoneyTransaction) {
-    return this.http.post<WeekSpend>(
-      '/sp/api/money-transaction/create',
-      transaction
-    );
+    return this.http.post<WeekSpend>('money-transaction/create', transaction);
   }
 
   update(transaction: MoneyTransaction) {
-    return this.http.put<WeekSpend>(
-      '/sp/api/money-transaction/update',
-      transaction
-    );
+    return this.http.put<WeekSpend>('money-transaction/update', transaction);
   }
 }

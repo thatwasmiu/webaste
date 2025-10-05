@@ -56,6 +56,8 @@ export class WeekSpendConponent implements OnInit, AfterViewInit {
     weekOfMonth: Array.from({ length: 53 }, (_, i) => i + 1),
   };
   weekSpend: WeekSpend = { daySpends: [], cashSpend: '0', digitalSpend: '0' };
+  monhtBalanceForm: FormGroup;
+
   public constructor(
     private moneyTransactionService: MoneyTransactionService,
     private monthBalanceService: MonthBalanceService,
@@ -71,6 +73,14 @@ export class WeekSpendConponent implements OnInit, AfterViewInit {
       amount: [null, [Validators.required]],
       type: [null, [Validators.required]],
       method: [null, [Validators.required]],
+    });
+
+    this.monhtBalanceForm = this.fb.group({
+      cashBalance: [null, Validators.required],
+      digitalBalance: [null, Validators.required],
+      budget: [null, Validators.required],
+      extraIncrease: [null],
+      increaseReason: [null],
     });
   }
 
@@ -114,17 +124,24 @@ export class WeekSpendConponent implements OnInit, AfterViewInit {
   transactionForm: FormGroup;
   transactionDialogVisible = false;
   addTransaction(daySpend: DaySpend) {
-    this.editedTransaction = {userId: this.userId, date : daySpend.date};
+    this.editedTransaction = { userId: this.userId, date: daySpend.date };
     this.transactionDialogVisible = true;
     this.transactionForm.reset();
-    this.transactionForm.patchValue({date: new Date(daySpend.date) ,type: 'OUTGOING_INCLUDED', method: 'DIGITAL'})
+    this.transactionForm.patchValue({
+      date: new Date(daySpend.date),
+      type: 'OUTGOING_INCLUDED',
+      method: 'DIGITAL',
+    });
   }
 
   editTransaction(transaction: MoneyTransaction) {
     this.editedTransaction = transaction;
     this.transactionDialogVisible = true;
     this.transactionForm.reset();
-    this.transactionForm.patchValue({...transaction, date: new Date(transaction.date)})
+    this.transactionForm.patchValue({
+      ...transaction,
+      date: new Date(transaction.date),
+    });
   }
 
   onSubmit(): void {
@@ -133,12 +150,12 @@ export class WeekSpendConponent implements OnInit, AfterViewInit {
       let transaction: MoneyTransaction = {
         ...this.editedTransaction,
         ...formValue,
-        date: formValue.date.getTime()
+        date: formValue.date.getTime(),
       };
 
       let request$ = transaction.id
-      ? this.moneyTransactionService.update(transaction)
-      : this.moneyTransactionService.create(transaction);
+        ? this.moneyTransactionService.update(transaction)
+        : this.moneyTransactionService.create(transaction);
 
       request$.subscribe({
         next: () => {
@@ -147,31 +164,69 @@ export class WeekSpendConponent implements OnInit, AfterViewInit {
         },
         error: (err) => {
           console.error(err);
-        }
+        },
       });
     }
   }
 
-  getMonthSpend() {
-    this.moneyTransactionService.getWeekSpend(this.year * 100 + this.week).pipe(
-    switchMap((weekSpend) =>
-        this.monthBalanceService.getMonthBalance(this.year * 100 + this.month).pipe(
-          map((monthBalance) => ({ weekSpend, monthBalance }))
-        )
-      )
-    ).subscribe({
-      next: ({ weekSpend, monthBalance }) => {
-        this.monthBalance = monthBalance;
-        this.weekSpend = weekSpend;
-        this.totalTransactions = weekSpend.daySpends
-          .map(e => e.transactions.length)
-          .reduce((sum, len) => sum + len, 0);
+  monthBalanceDialogVisible = false;
+  editMonthBalance() {
+    this.monthBalanceDialogVisible = true;
+    this.monhtBalanceForm.reset();
+    this.monhtBalanceForm.patchValue({
+      ...this.monthBalance,
+      ...this.monthBalance.monthBudget,
+    });
+  }
+
+  onSubmitBalance(): void {
+    if (!this.monhtBalanceForm.valid) return;
+
+    let formValue = this.monhtBalanceForm.getRawValue();
+    let monthBalance: MonthBalance = {
+      ...this.monthBalance,
+      cashBalance: formValue.cashBalance,
+      digitalBalance: formValue.digitalBalance,
+      monthBudget: {
+        budget: formValue.budget,
+        extraIncrease: formValue.extraIncrease,
+        increaseReason: formValue.increaseReason,
+      },
+    };
+
+    this.monthBalanceService.update(monthBalance).subscribe({
+      next: (res) => {
+        this.monthBalanceDialogVisible = false;
+        this.monthBalance = res;
       },
       error: (err) => {
-        console.error('Error:', err);
+        console.error(err);
       },
     });
+  }
 
+  getMonthSpend() {
+    this.moneyTransactionService
+      .getWeekSpend(this.year * 100 + this.week)
+      .pipe(
+        switchMap((weekSpend) =>
+          this.monthBalanceService
+            .getMonthBalance(this.year * 100 + this.month)
+            .pipe(map((monthBalance) => ({ weekSpend, monthBalance })))
+        )
+      )
+      .subscribe({
+        next: ({ weekSpend, monthBalance }) => {
+          this.monthBalance = monthBalance;
+          this.weekSpend = weekSpend;
+          this.totalTransactions = weekSpend.daySpends
+            .map((e) => e.transactions.length)
+            .reduce((sum, len) => sum + len, 0);
+        },
+        error: (err) => {
+          console.error('Error:', err);
+        },
+      });
   }
 
   getWeekSpend() {

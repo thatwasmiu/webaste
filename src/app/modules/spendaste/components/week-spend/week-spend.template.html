@@ -37,13 +37,18 @@
             <spand class="pi pi-plus-circle" style="font-size: 0, 5rem"></spand>
           </td>
           <td>
-            <div *ngFor="let t of daySpend.transactions" (click)="editTransaction(t)">
-              {{t.date | date : 'HH:ss'}} {{ t.name }} - {{ t.amount }}
+            <div
+              *ngFor="let t of daySpend.transactions"
+              (click)="editTransaction(t)"
+            >
+              {{t.date | date : 'HH:mm'}}
+              <b>{{ t.name }}</b> -
+              <b>{{ t.amount }} </b>
               <span *ngIf="t.method === 'CASH'">
-                <i class="pi pi-wallet" style="color: green;"></i>
+                <i class="pi pi-wallet" style="color: green"></i>
               </span>
               <span *ngIf="t.method === 'DIGITAL'">
-                <i class="pi pi-credit-card" style="color: blue;"></i>
+                <i class="pi pi-credit-card" style="color: blue"></i>
               </span>
             </div>
           </td>
@@ -68,23 +73,25 @@
       <p>Cash Spending: {{ monthBalance.monthSpend?.cashSpend }}</p>
       <p>Digital Spending: {{ monthBalance.monthSpend?.digitalSpend }}</p>
       <p>
-        Total Spending:
-        {{
-          (monthBalance.monthSpend?.digitalSpend ?? 0) +
-          (monthBalance.monthSpend?.cashSpend ?? 0)
-        }}
+        Total Spending: {{ (monthBalance.monthSpend?.digitalSpend ?? 0) +
+        (monthBalance.monthSpend?.cashSpend ?? 0) }}
       </p>
     </div>
   </div>
 </div>
-<div class="shadow-2 surface-card p-3 border-round">
+<div
+  class="shadow-2 surface-card p-3 border-round"
+  (click)="editMonthBalance()"
+>
   <h3 class="m-0">Month Balance</h3>
-  <p>Cash Balance: {{ monthBalance.cashBalance }}</p>
-  <p>Digital Balance: {{ monthBalance.digitalBalance }}</p>
-</div>
-<div class="shadow-2 surface-card p-3 border-round">
-  <h3 class="m-0">Month Budget</h3>
-  <p>Total: {{ monthBalance.monthBudget?.budget }}</p>
+  <p>
+    Cash Balance: {{ monthBalance.cashBalance }} -- {{monthBalance.currentCash}}
+  </p>
+  <p>
+    Digital Balance: {{ monthBalance.digitalBalance }} --
+    {{monthBalance.currentDigital}}
+  </p>
+  <p>Budget: {{ monthBalance.monthBudget?.budget }}</p>
   <p>Increase: {{ monthBalance.monthBudget?.extraIncrease }}</p>
 </div>
 
@@ -99,10 +106,14 @@
   </ng-template>
 
   <form [formGroup]="transactionForm" (ngSubmit)="onSubmit()" class="p-fluid">
-
     <div class="field">
       <label for="date">Date</label>
-      <p-calendar id="date" formControlName="date" [showTime]="true" [timeOnly]="true" [showSeconds]="true" appendTo="body"></p-calendar>
+      <p-calendar
+        id="date"
+        formControlName="date"
+        [showTime]="true"
+        appendTo="body"
+      ></p-calendar>
       <small
         *ngIf="transactionForm.controls['name'].invalid && transactionForm.controls['name'].touched"
         class="p-error"
@@ -110,7 +121,6 @@
         Date is required
       </small>
     </div>
-    
 
     <!-- Name -->
     <div class="field">
@@ -193,6 +203,102 @@
       type="submit"
       label="Save"
       [disabled]="transactionForm.invalid"
+    ></button>
+  </form>
+</p-dialog>
+
+<p-dialog
+  [(visible)]="monthBalanceDialogVisible"
+  [style]="{width: '50vw'} "
+  [modal]="true"
+  [dismissableMask]="true"
+>
+  <ng-template pTemplate="header">
+    Month blance {{this.month}}\{{this.year}}
+  </ng-template>
+
+  <form
+    [formGroup]="monhtBalanceForm"
+    (ngSubmit)="onSubmitBalance()"
+    class="p-fluid"
+  >
+    <div class="field">
+      <label for="cashBalance">Cash Balance</label>
+      <p-inputNumber
+        inputId="cashBalance"
+        formControlName="cashBalance"
+        mode="decimal"
+        placeholder="0.00"
+      >
+      </p-inputNumber>
+      <small
+        *ngIf="monhtBalanceForm.controls['cashBalance'].invalid && monhtBalanceForm.controls['cashBalance'].touched"
+        class="p-error"
+      >
+        Field is required
+      </small>
+    </div>
+
+    <div class="field">
+      <label for="digitalBalance">Digital Balance</label>
+      <p-inputNumber
+        inputId="digitalBalance"
+        formControlName="digitalBalance"
+        mode="decimal"
+        placeholder="0.00"
+      >
+      </p-inputNumber>
+      <small
+        *ngIf="monhtBalanceForm.controls['digitalBalance'].invalid && monhtBalanceForm.controls['digitalBalance'].touched"
+        class="p-error"
+      >
+        Field is required
+      </small>
+    </div>
+
+    <div class="field">
+      <label for="budget">Budget</label>
+      <p-inputNumber
+        inputId="budget"
+        formControlName="budget"
+        mode="decimal"
+        placeholder="0.00"
+      >
+      </p-inputNumber>
+      <small
+        *ngIf="monhtBalanceForm.controls['budget'].invalid && monhtBalanceForm.controls['budget'].touched"
+        class="p-error"
+      >
+        Field is required
+      </small>
+    </div>
+
+    <div class="field">
+      <label for="extraIncrease">Extra Increase</label>
+      <p-inputNumber
+        inputId="extraIncrease"
+        formControlName="extraIncrease"
+        mode="decimal"
+        placeholder="0.00"
+      >
+      </p-inputNumber>
+    </div>
+
+    <div class="increaseReason">
+      <label for="increaseReason">Increase Reason</label>
+      <input
+        id="name"
+        type="text"
+        pInputText
+        formControlName="increaseReason"
+      />
+    </div>
+
+    <button
+      pButton
+      type="submit"
+      label="Save"
+      [disabled]="monhtBalanceForm.invalid"
     ></button>
   </form>
 </p-dialog>

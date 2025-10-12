@@ -1,4 +1,4 @@
 export const environment = {
   production: false,
-  HOST_GW: 'http://localhost:8023',
+  HOST_GW: 'http://localhost:8023/sp/api/',
 };

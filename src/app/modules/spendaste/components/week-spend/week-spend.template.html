@@ -19,7 +19,7 @@
 <div class="grid gap-4 m-1">
   <div class="col-9">
     <p-table
-      [value]="weekSpend.daySpends"
+      [value]="weekSpend.dayTransactions"
       [tableStyle]="{ 'min-width': '50rem' }"
     >
       <ng-template pTemplate="header">
@@ -30,19 +30,26 @@
           <th>Digital</th>
         </tr>
       </ng-template>
-      <ng-template pTemplate="body" let-daySpend>
+      <ng-template pTemplate="body" let-dayTransaction>
         <tr>
-          <td (click)="addTransaction(daySpend)">
-            {{ daySpend.date | date:'dd/MM/yyyy' }}
+          <td (click)="addTransaction(dayTransaction)">
+            {{ dayTransaction.date | date:'dd/MM/yyyy' }}
             <spand class="pi pi-plus-circle" style="font-size: 0, 5rem"></spand>
           </td>
           <td>
             <div
-              *ngFor="let t of daySpend.transactions"
+              *ngFor="let t of dayTransaction.transactions"
               (click)="editTransaction(t)"
             >
               {{t.date | date : 'HH:mm'}}
-              <b>{{ t.name }}</b> -
+              <b
+                [ngClass]="{
+                'text-red-500': t.type.startsWith('OUTGOING'),
+                'text-green-500': t.type.startsWith('INCOMING')
+              }"
+                >{{ t.name }}</b
+              >
+              -
               <b>{{ t.amount }} </b>
               <span *ngIf="t.method === 'CASH'">
                 <i class="pi pi-wallet" style="color: green"></i>
@@ -52,8 +59,8 @@
               </span>
             </div>
           </td>
-          <td>{{ daySpend.cashSpend }}</td>
-          <td>{{ daySpend.digitalSpend }}</td>
+          <td>{{ dayTransaction.cashSpend }}</td>
+          <td>{{ dayTransaction.digitalSpend }}</td>
         </tr>
       </ng-template>
     </p-table>
@@ -62,20 +69,24 @@
   <div class="col">
     <div class="shadow-2 surface-card p-3 border-round">
       <h3 class="m-0">Week Spending Summary</h3>
-      <p>Total Cash: {{ weekSpend.cashSpend }}</p>
-      <p>Total Digital: {{ weekSpend.digitalSpend }}</p>
-      <p>Total Spending: {{ weekSpend.cashSpend + weekSpend.digitalSpend }}</p>
-      <p>Total Transactions: {{ totalTransactions }}</p>
+      <p>Cash: {{ weekSpend.cashSpend }}</p>
+      <p>Digital: {{ weekSpend.digitalSpend }}</p>
+      <p>Spending: {{ weekSpend.cashSpend + weekSpend.digitalSpend }}</p>
+      <p>Transactions: {{ totalTransactions }}</p>
     </div>
 
     <div class="shadow-2 surface-card p-3 border-round">
-      <h3 class="m-0">Month Spending Summary</h3>
-      <p>Cash Spending: {{ monthBalance.monthSpend?.cashSpend }}</p>
-      <p>Digital Spending: {{ monthBalance.monthSpend?.digitalSpend }}</p>
+      <h3 class="m-0">Month Transaction Summary</h3>
+      <p>Cash Spend: {{ monthBalance.monthSpend?.cashSpend }}</p>
+      <p>Digital Spend: {{ monthBalance.monthSpend?.digitalSpend }}</p>
       <p>
-        Total Spending: {{ (monthBalance.monthSpend?.digitalSpend ?? 0) +
-        (monthBalance.monthSpend?.cashSpend ?? 0) }}
+        <b>
+          Total Spending: {{ (monthBalance.monthSpend?.digitalSpend ?? 0) +
+          (monthBalance.monthSpend?.cashSpend ?? 0) }}
+        </b>
       </p>
+      <p>Cash Receive: {{ monthBalance.monthReceive.cashReceive}}</p>
+      <p>Digital Receive: {{ monthBalance.monthReceive.digitalReceive}}</p>
     </div>
   </div>
 </div>

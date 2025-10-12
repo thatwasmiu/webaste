@@ -3,7 +3,7 @@ import { TableModule } from 'primeng/table';
 import { AfterViewInit, Component, OnInit } from '@angular/core';
 import { MoneyTransactionService } from 'src/app/modules/spendaste/services/money-transaction.service';
 import {
-  DaySpend,
+  DayTransaction,
   MoneyTransaction,
   MonthBalance,
   WeekSpend,
@@ -55,7 +55,11 @@ export class WeekSpendConponent implements OnInit, AfterViewInit {
   monthBalance: MonthBalance = {
     weekOfMonth: Array.from({ length: 53 }, (_, i) => i + 1),
   };
-  weekSpend: WeekSpend = { daySpends: [], cashSpend: '0', digitalSpend: '0' };
+  weekSpend: WeekSpend = {
+    dayTransactions: [],
+    cashSpend: '0',
+    digitalSpend: '0',
+  };
   monhtBalanceForm: FormGroup;
 
   public constructor(
@@ -64,7 +68,7 @@ export class WeekSpendConponent implements OnInit, AfterViewInit {
     private fb: FormBuilder,
     private authService: AuthService
   ) {
-    this.userId = authService.getUserId();
+    this.userId = this.authService.getUserId();
     this.setDate(new Date());
     this.getMonthSpend();
     this.transactionForm = this.fb.group({
@@ -123,12 +127,12 @@ export class WeekSpendConponent implements OnInit, AfterViewInit {
   editedTransaction: MoneyTransaction;
   transactionForm: FormGroup;
   transactionDialogVisible = false;
-  addTransaction(daySpend: DaySpend) {
-    this.editedTransaction = { userId: this.userId, date: daySpend.date };
+  addTransaction(dayTransaction: DayTransaction) {
+    this.editedTransaction = { userId: this.userId, date: dayTransaction.date };
     this.transactionDialogVisible = true;
     this.transactionForm.reset();
     this.transactionForm.patchValue({
-      date: new Date(daySpend.date),
+      date: new Date(dayTransaction.date),
       type: 'OUTGOING_INCLUDED',
       method: 'DIGITAL',
     });
@@ -219,7 +223,7 @@ export class WeekSpendConponent implements OnInit, AfterViewInit {
         next: ({ weekSpend, monthBalance }) => {
           this.monthBalance = monthBalance;
           this.weekSpend = weekSpend;
-          this.totalTransactions = weekSpend.daySpends
+          this.totalTransactions = weekSpend.dayTransactions
             .map((e) => e.transactions.length)
             .reduce((sum, len) => sum + len, 0);
         },

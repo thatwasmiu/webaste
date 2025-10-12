@@ -33,12 +33,12 @@ export interface MoneyTransaction extends BaseEntity {
 }
 
 export interface WeekSpend {
-  daySpends: DaySpend[]; // list of transactions
+  dayTransactions: DayTransaction[]; // list of transactions
   cashSpend: string; // BigDecimal → string
   digitalSpend: string; // BigDecimal → string
 }
 
-export interface DaySpend {
+export interface DayTransaction {
   date: number;
   transactions: MoneyTransaction[]; // list of transactions
   cashSpend: string; // BigDecimal → string
@@ -53,6 +53,7 @@ export interface MonthBalance extends BaseEntity {
   cashBalance?: string; // BigDecimal → string
   monthBudget?: MonthBudget;
   monthSpend?: MonthSpend;
+  monthReceive?: MonthReceive;
   weekOfMonth?: number[];
   currentCash?: number;
   currentDigital?: number;
@@ -66,4 +67,9 @@ export interface MonthSpend {
   digitalSpend?: string; // BigDecimal → string
   cashSpend?: string; // BigDecimal → string
   lastMonthSpend?: string; // BigDecimal → string
+}
+
+export interface MonthReceive {
+  digitalReceive?: string; // BigDecimal → string
+  cashReceive?: string; // BigDecimal → string
 }

@@ -28,14 +28,14 @@ export interface MoneyTransaction extends BaseEntity {
   date?: number; // timestamp (Java Long)
   yearMonth?: number; // readonly in backend -> optional here
   yearWeek?: number; // same
-  amount?: string; // BigDecimal -> usually string
+  amount?: number; // BigDecimal -> usually string
   categoryId?: number; // nullable in Java
 }
 
 export interface WeekSpend {
   dayTransactions: DayTransaction[]; // list of transactions
-  cashSpend: string; // BigDecimal → string
-  digitalSpend: string; // BigDecimal → string
+  cashSpend: number; // BigDecimal → string
+  digitalSpend: number; // BigDecimal → string
 }
 
 export interface DayTransaction {
@@ -49,8 +49,8 @@ export interface MonthBalance extends BaseEntity {
   monthYearUser?: number; // @Id (Long)
   yearMonth?: number; // e.g. 202509 for September 2025
   userId?: number;
-  digitalBalance?: string; // BigDecimal → string
-  cashBalance?: string; // BigDecimal → string
+  digitalBalance?: number; // BigDecimal → string
+  cashBalance?: number; // BigDecimal → string
   monthBudget?: MonthBudget;
   monthSpend?: MonthSpend;
   monthReceive?: MonthReceive;
@@ -59,17 +59,39 @@ export interface MonthBalance extends BaseEntity {
   currentDigital?: number;
 }
 export interface MonthBudget {
-  budget?: string; // BigDecimal → string, nullable
-  extraIncrease?: string; // BigDecimal → string
+  budget?: number; // BigDecimal → string, nullable
+  extraIncrease?: number; // BigDecimal → string
   increaseReason?: string;
 }
 export interface MonthSpend {
-  digitalSpend?: string; // BigDecimal → string
-  cashSpend?: string; // BigDecimal → string
-  lastMonthSpend?: string; // BigDecimal → string
+  digitalSpend?: number; // BigDecimal → string
+  cashSpend?: number; // BigDecimal → string
+  lastMonthSpend?: number; // BigDecimal → string
 }
 
 export interface MonthReceive {
-  digitalReceive?: string; // BigDecimal → string
-  cashReceive?: string; // BigDecimal → string
+  digitalReceive?: number; // BigDecimal → string
+  cashReceive?: number; // BigDecimal → string
+}
+
+export interface MonthReceive {
+  digitalReceive?: number; // BigDecimal → string
+  cashReceive?: number; // BigDecimal → string
+}
+
+export interface WeekReport {
+  yearWeek?: number;
+  totalCount?: number;
+  cashIncluded?: number;
+  cashExcluded?: number;
+  digitalIncluded?: number;
+  digitalExcluded?: number;
+}
+
+export interface MonthTransactionRatio {
+  totalCount?: number;
+  spendIncluded?: number;
+  receiveIncluded?: number;
+  spendToReceive?: number;
+  receiveToSpend?: number;
 }

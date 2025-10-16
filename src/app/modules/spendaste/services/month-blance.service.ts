@@ -1,6 +1,6 @@
 import { HttpClient } from '@angular/common/http';
 import { Injectable } from '@angular/core';
-import { MonthBalance } from '../models/spendaste.model';
+import { MonthBalance, MonthTransactionRatio, WeekReport } from '../models/spendaste.model';
 
 @Injectable()
 export class MonthBalanceService {
@@ -12,5 +12,21 @@ export class MonthBalanceService {
 
   update(monthBalance: MonthBalance) {
     return this.http.post<MonthBalance>('month-balance/update', monthBalance);
+  }
+
+  getWeekMoneyInMonth(yearWeek: number) {
+    return this.http.get<WeekReport[]>('money-report/weekly',
+      {
+        params: { yearWeek: yearWeek }
+      }
+    )
+  }
+
+  getTransactionRatio(yearMonth: number) {
+    return this.http.get<MonthTransactionRatio>('money-report/ratio',
+      {
+        params: { yearMonth: yearMonth }
+      }
+    )
   }
 }

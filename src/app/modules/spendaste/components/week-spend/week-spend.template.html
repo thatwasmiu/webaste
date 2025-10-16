@@ -85,8 +85,8 @@
           (monthBalance.monthSpend?.cashSpend ?? 0) }}
         </b>
       </p>
-      <p>Cash Receive: {{ monthBalance.monthReceive.cashReceive}}</p>
-      <p>Digital Receive: {{ monthBalance.monthReceive.digitalReceive}}</p>
+      <p>Cash Receive: {{ monthBalance.monthReceive?.cashReceive}}</p>
+      <p>Digital Receive: {{ monthBalance.monthReceive?.digitalReceive}}</p>
     </div>
   </div>
 </div>
@@ -102,8 +102,9 @@
     Digital Balance: {{ monthBalance.digitalBalance }} --
     {{monthBalance.currentDigital}}
   </p>
-  <p>Budget: {{ monthBalance.monthBudget?.budget }}</p>
+  <p>Budget: {{ monthBalance.monthBudget?.budget }} -- {{monthBalance.monthBudget?.budget + monthBalance.monthBudget?.extraIncrease - monthBalance.monthSpend?.digitalSpend -monthBalance.monthSpend?.cashSpend}}</p>
   <p>Increase: {{ monthBalance.monthBudget?.extraIncrease }}</p>
+  <p>Increase reason: {{ monthBalance.monthBudget?.increaseReason }}</p>
 </div>
 
 <p-dialog
@@ -313,3 +314,19 @@
     ></button>
   </form>
 </p-dialog>
+
+
+<div
+  class="shadow-2 surface-card p-3 border-round grid gap-4 m-1"
+>
+  <div class="col-7">
+    <div style="width: 100%; height: 400px;">
+      <canvas #chart ></canvas>
+    </div>
+  </div>
+  <div class="col-3">
+    <div style="width: 100%; height: 400px;">
+      <canvas #ratioChart ></canvas>
+    </div>
+  </div>
+</div>

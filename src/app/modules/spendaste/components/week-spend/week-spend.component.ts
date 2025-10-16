@@ -1,6 +1,12 @@
 import { CommonModule } from '@angular/common';
 import { TableModule } from 'primeng/table';
-import { AfterViewInit, Component, OnInit } from '@angular/core';
+import {
+  AfterViewInit,
+  Component,
+  ElementRef,
+  OnInit,
+  ViewChild,
+} from '@angular/core';
 import { MoneyTransactionService } from 'src/app/modules/spendaste/services/money-transaction.service';
 import {
   DayTransaction,
@@ -9,6 +15,7 @@ import {
   WeekSpend,
 } from '../../models/spendaste.model';
 import { CalendarModule } from 'primeng/calendar';
+import Chart from 'chart.js/auto';
 import {
   FormBuilder,
   FormGroup,
@@ -57,8 +64,8 @@ export class WeekSpendConponent implements OnInit, AfterViewInit {
   };
   weekSpend: WeekSpend = {
     dayTransactions: [],
-    cashSpend: '0',
-    digitalSpend: '0',
+    cashSpend: 0,
+    digitalSpend: 0,
   };
   monhtBalanceForm: FormGroup;
 
@@ -89,7 +96,6 @@ export class WeekSpendConponent implements OnInit, AfterViewInit {
   }
 
   ngOnInit(): void {}
-  ngAfterViewInit(): void {}
 
   setDate(date: Date) {
     this.date = date;
@@ -130,6 +136,7 @@ export class WeekSpendConponent implements OnInit, AfterViewInit {
   addTransaction(dayTransaction: DayTransaction) {
     this.editedTransaction = { userId: this.userId, date: dayTransaction.date };
     this.transactionDialogVisible = true;
+    this.transactionForm.enable();
     this.transactionForm.reset();
     this.transactionForm.patchValue({
       date: new Date(dayTransaction.date),
@@ -141,6 +148,7 @@ export class WeekSpendConponent implements OnInit, AfterViewInit {
   editTransaction(transaction: MoneyTransaction) {
     this.editedTransaction = transaction;
     this.transactionDialogVisible = true;
+    this.transactionForm.enable();
     this.transactionForm.reset();
     this.transactionForm.patchValue({
       ...transaction,
@@ -149,33 +157,36 @@ export class WeekSpendConponent implements OnInit, AfterViewInit {
   }
 
   onSubmit(): void {
-    if (this.transactionForm.valid) {
-      let formValue = this.transactionForm.getRawValue();
-      let transaction: MoneyTransaction = {
-        ...this.editedTransaction,
-        ...formValue,
-        date: formValue.date.getTime(),
-      };
+    if (!this.transactionForm.valid) return;
 
-      let request$ = transaction.id
-        ? this.moneyTransactionService.update(transaction)
-        : this.moneyTransactionService.create(transaction);
+    this.transactionForm.disable();
 
-      request$.subscribe({
-        next: () => {
-          this.transactionDialogVisible = false;
-          this.getMonthSpend();
-        },
-        error: (err) => {
-          console.error(err);
-        },
-      });
-    }
+    let formValue = this.transactionForm.getRawValue();
+    let transaction: MoneyTransaction = {
+      ...this.editedTransaction,
+      ...formValue,
+      date: formValue.date.getTime(),
+    };
+
+    let request$ = transaction.id
+      ? this.moneyTransactionService.update(transaction)
+      : this.moneyTransactionService.create(transaction);
+
+    request$.subscribe({
+      next: () => {
+        this.transactionDialogVisible = false;
+        this.getMonthSpend();
+      },
+      error: (err) => {
+        console.error(err);
+      },
+    });
   }
 
   monthBalanceDialogVisible = false;
   editMonthBalance() {
     this.monthBalanceDialogVisible = true;
+    this.monhtBalanceForm.enable();
     this.monhtBalanceForm.reset();
     this.monhtBalanceForm.patchValue({
       ...this.monthBalance,
@@ -185,6 +196,7 @@ export class WeekSpendConponent implements OnInit, AfterViewInit {
 
   onSubmitBalance(): void {
     if (!this.monhtBalanceForm.valid) return;
+    this.monhtBalanceForm.disable();
 
     let formValue = this.monhtBalanceForm.getRawValue();
     let monthBalance: MonthBalance = {
@@ -241,5 +253,164 @@ export class WeekSpendConponent implements OnInit, AfterViewInit {
         this.weekSpend = res;
       },
     });
+  }
+
+  @ViewChild('chart') chartRef!: ElementRef<HTMLCanvasElement>;
+  chart!: Chart;
+
+  @ViewChild('ratioChart') ratioChartRef!: ElementRef<HTMLCanvasElement>;
+  ratioChart!: Chart;
+
+  ngAfterViewInit() {
+    this.monthBalanceService
+      .getWeekMoneyInMonth(this.year * 100 + this.week)
+      .subscribe({
+        next: (res) => {
+          const data = res;
+
+          const maxValue = Math.max(
+            ...data.flatMap((d) => [
+              d.cashIncluded + d.cashExcluded,
+              d.digitalIncluded + d.digitalExcluded,
+            ])
+          );
+          const maxY = maxValue <= 1000 ? 1000 : undefined;
+          if (this.chart) {
+            this.chart.destroy();
+          }
+          this.chart = new Chart(this.chartRef.nativeElement, {
+            type: 'bar',
+            data: {
+              labels: data.map((d) => d.yearWeek),
+              datasets: [
+                {
+                  label: 'Cash Included',
+                  data: data.map((d) => d.cashIncluded),
+                  backgroundColor: '#42A5F5',
+                  stack: 'cash',
+                  yAxisID: 'y',
+                },
+                {
+                  label: 'Cash Excluded',
+                  data: data.map((d) => d.cashExcluded),
+                  backgroundColor: '#90CAF9',
+                  stack: 'cash',
+                  yAxisID: 'y',
+                },
+                {
+                  label: 'Digital Included',
+                  data: data.map((d) => d.digitalIncluded),
+                  backgroundColor: '#66BB6A',
+                  stack: 'digital',
+                  yAxisID: 'y',
+                },
+                {
+                  label: 'Digital Excluded',
+                  data: data.map((d) => d.digitalExcluded),
+                  backgroundColor: '#A5D6A7',
+                  stack: 'digital',
+                  yAxisID: 'y',
+                },
+                {
+                  label: 'Transactions Count',
+                  data: data.map((d) => d.totalCount),
+                  type: 'line',
+                  borderColor: '#FFA726',
+                  backgroundColor: '#FFA726',
+                  yAxisID: 'y1',
+                  tension: 0.3,
+                  fill: false,
+                },
+              ],
+            },
+            options: {
+              responsive: true,
+              maintainAspectRatio: false,
+              scales: {
+                y: {
+                  beginAtZero: true,
+                  position: 'left',
+                  max: maxY,
+                  title: { display: true, text: 'Amount' },
+                  stacked: true, // Important for stacking
+                },
+                y1: {
+                  beginAtZero: true,
+                  position: 'right',
+                  grid: { drawOnChartArea: false },
+                  title: { display: true, text: 'Total Transactions' },
+                },
+                x: {
+                  stacked: true, // Important for stacking grouped bars
+                },
+              },
+              plugins: {
+                legend: { position: 'top' },
+                title: {
+                  display: true,
+                  text: 'Weekly Cash vs Digital Transactions',
+                },
+              },
+            },
+          });
+        },
+      });
+
+    this.monthBalanceService
+      .getTransactionRatio(this.year * 100 + this.month)
+      .subscribe({
+        next: (res) => {
+          const centerTextPlugin = {
+            id: 'centerText',
+            beforeDraw(chart) {
+              const { ctx, data } = chart;
+              const total = data.datasets[0].data.reduce((a, b) => a + b, 0);
+              const [spend, receive] = data.datasets[0].data;
+              const percent = ((receive / total) * 100).toFixed(1);
+
+              ctx.save();
+              const centerX = chart.chartArea.width / 2 + chart.chartArea.left;
+              const centerY = chart.chartArea.height / 2 + chart.chartArea.top;
+              ctx.font = 'bold 18px Arial';
+              ctx.textAlign = 'center';
+              ctx.fillStyle = '#333';
+              ctx.fillText(`${percent}% Receive`, centerX, centerY);
+              ctx.restore();
+            },
+          };
+
+          if (this.ratioChart) {
+            this.ratioChart.destroy();
+          }
+          this.ratioChart = new Chart(this.ratioChartRef.nativeElement, {
+            type: 'doughnut',
+            data: {
+              labels: ['Spend', 'Receive'],
+              datasets: [
+                {
+                  data: [res.spendIncluded, res.receiveIncluded],
+                  backgroundColor: ['#EF5350', '#66BB6A'],
+                },
+              ],
+            },
+            options: {
+              plugins: {
+                title: { display: true, text: 'Spend vs Receive Ratio' },
+                tooltip: {
+                  callbacks: {
+                    label: (context) => {
+                      const total = res.receiveIncluded + res.spendIncluded;
+                      const val = context.parsed;
+                      const pct = ((val / total) * 100).toFixed(1);
+                      return `${context.label}: ${val} (${pct}%)`;
+                    },
+                  },
+                },
+              },
+            },
+            plugins: [centerTextPlugin],
+          });
+        },
+      });
   }
 }
